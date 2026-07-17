@@ -1,1 +1,36 @@
+import time
+import google.generativeai as genai
+import os
 
+# 設定
+genai.configure(api_key="YOUR_API_KEY")
+model = genai.GenerativeModel('gemini-1.5-flash') # 無料枠が広いモデル
+INPUT_FILE = "questions.txt" # 質問リスト
+OUTPUT_DIR = "C:/Users/YourName/Desktop/Mega/Research_Results" # Mega同期フォルダ
+
+def process_questions():
+    with open(INPUT_FILE, "r", encoding="utf-8") as f:
+        questions = f.read().split("\n\n") # 空行区切りで質問を分割
+
+    for i, q in enumerate(questions):
+        if not q.strip(): continue
+        
+        # API呼び出し
+        try:
+            response = model.generate_content(q + " 指示文：簡潔に専門的に解説してください。")
+            
+            # ファイル保存
+            filename = f"{OUTPUT_DIR}/result_{i}_{int(time.time())}.md"
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(f"# Question\n{q}\n\n# Answer\n{response.text}")
+            
+            # API制限対策：無料枠の制限(RPM)を守るための待機
+            # Flashモデルの無料枠は1分間に15リクエストまで
+            time.sleep(65) 
+            
+        except Exception as e:
+            print(f"Error: {e}")
+            time.sleep(60)
+
+if __name__ == "__main__":
+    process_questions()
